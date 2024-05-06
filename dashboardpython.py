@@ -144,7 +144,88 @@ def main():
         with col2:
             st.markdown("### Phân phối khách hàng:")
             fig = plot_customer_distribution(segment_percentage)
-            st.plotly_chart(fig, use_container_width=True)   
+            st.plotly_chart(fig, use_container_width=True) 
+        def plot_total_orders_by_segment(data):
+            # Tổng số đơn hàng theo PKKH
+            total_orders_by_segment = data.groupby('Mã PKKH')['Mã đơn hàng'].nunique()
+            df_total = total_orders_by_segment.reset_index(name='Tổng số đơn hàng').sort_values(by='Tổng số đơn hàng', ascending=True)
+            
+            fig_total = px.bar(df_total, x='Mã PKKH', y='Tổng số đơn hàng',
+                            title='Tổng số đơn hàng theo Mã PKKH',
+                            color='Tổng số đơn hàng',
+                            color_continuous_scale=px.colors.sequential.Rainbow)
+            return fig_total
+
+        def plot_quarterly_orders_by_segment(data):
+            # Tổng số đơn hàng theo PKKH từng quý
+            quarterly_orders = data.groupby(['Mã PKKH', 'Quý'])['Mã đơn hàng'].nunique()
+            df_quarterly = quarterly_orders.reset_index(name='Tổng số đơn hàng')
+            
+            fig_quarterly = px.line(df_quarterly, x='Quý', y='Tổng số đơn hàng',
+                                    title='Đơn hàng theo từng Quý',
+                                    color='Mã PKKH',
+                                    markers=True,
+                                    color_discrete_sequence=px.colors.diverging.Geyser)
+            return fig_quarterly
+
+        def plot_monthly_orders_by_segment(data):
+            # Tổng số đơn hàng theo PKKH từng tháng
+            monthly_orders = data.groupby(['Mã PKKH', 'Tháng'])['Mã đơn hàng'].nunique()
+            df_monthly = monthly_orders.reset_index(name='Tổng số đơn hàng')
+            
+            fig_monthly = px.line(df_monthly, x='Tháng', y='Tổng số đơn hàng',
+                                title='Đơn hàng theo từng Tháng',
+                                color='Mã PKKH',
+                                markers=True,
+                                color_discrete_sequence=px.colors.diverging.Geyser)
+            return fig_monthly
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.plotly_chart(plot_total_orders_by_segment(data))
+        with col2:
+            st.plotly_chart(plot_quarterly_orders_by_segment(data))
+        with col3:
+            st.plotly_chart(plot_monthly_orders_by_segment(data))
+        def plot_bar_chart(data, group_col, agg_col, title, color_scale):
+            grouped_data = data.groupby(group_col)[agg_col].sum()
+            df = grouped_data.reset_index(name=f'Tổng {agg_col}').sort_values(by=f'Tổng {agg_col}', ascending=True)
+            fig = px.bar(df, x=group_col, y=f'Tổng {agg_col}',
+                        title=title,
+                        color=f'Tổng {agg_col}',
+                        color_continuous_scale=color_scale)
+            return fig
+
+        def plot_line_chart(data, group_cols, agg_col, title, color_sequence):
+            grouped_data = data.groupby(group_cols)[agg_col].sum()
+            df = grouped_data.reset_index(name=f'Tổng {agg_col}')
+            fig = px.line(df, x=group_cols[1], y=f'Tổng {agg_col}',
+                        title=title,
+                        color=group_cols[0],
+                        markers=True,
+                        color_discrete_sequence=color_sequence)
+            return fig
+        def display_charts(data):
+            st.title("Phân tích Doanh thu và Lợi nhuận")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.plotly_chart(plot_bar_chart(data, 'Mã PKKH', 'Thành tiền', 'Tổng doanh thu theo Mã PKKH', px.colors.sequential.Rainbow))
+            with col2:
+                st.plotly_chart(plot_line_chart(data, ['Mã PKKH', 'Quý'], 'Thành tiền', 'Doanh thu theo từng Quý', px.colors.diverging.Geyser))
+            with col3:
+                st.plotly_chart(plot_line_chart(data, ['Mã PKKH', 'Tháng'], 'Thành tiền', 'Doanh thu theo từng Tháng', px.colors.diverging.Geyser))
+
+            st.title("Phân tích Lợi nhuận")
+            col1, col2, col3 = st.columns(3)
+            with col1:
+                st.plotly_chart(plot_bar_chart(data, 'Mã PKKH', 'Lợi Nhuận Gộp', 'Tổng lợi nhuận theo Mã PKKH', px.colors.sequential.Rainbow))
+            with col2:
+                st.plotly_chart(plot_line_chart(data, ['Mã PKKH', 'Quý'], 'Lợi Nhuận Gộp', 'Lợi nhuận theo từng Quý', px.colors.diverging.Geyser))
+            with col3:
+                st.plotly_chart(plot_line_chart(data, ['Mã PKKH', 'Tháng'], 'Lợi Nhuận Gộp', 'Lợi nhuận theo từng Tháng', px.colors.diverging.Geyser))
+        display_charts(data)       
+
+
+        
     elif current_tab == "Tab 3":
         st.header("Phân Tích Doanh Thu")
     elif current_tab == "Tab 4":
