@@ -18,18 +18,18 @@ def main():
         st.markdown("<h1 style='text-align: center; font-size: 60px;'>Dashboard Nhóm 117</h1>", unsafe_allow_html=True)
 
     # Create button-based tabs
+    if 'current_tab' not in st.session_state:
+        st.session_state['current_tab'] = 'Tab 1'
+
+    # Create button-based tabs
     tabs = ["Tab 1", "Tab 2", "Tab 3", "Tab 4", "Tab 5"]
     tab_buttons = st.columns(len(tabs))
-    current_tab = None
     for i, button in enumerate(tab_buttons):
         if button.button(tabs[i]):
-            current_tab = tabs[i]
-            break
-    if current_tab is None:
-        current_tab = tabs[0]
+            st.session_state['current_tab'] = tabs[i]
 
     # Layout and content adjustments
-    if current_tab == "Tab 1":
+    if st.session_state['current_tab'] == "Tab 1":
         st.header("Tổng Quan Thị Trường")
         @st.cache_data
         def calculate_metrics(data):
@@ -103,7 +103,7 @@ def main():
 
 
     # Content for Tab 2
-    elif current_tab == "Tab 2":
+    elif st.session_state['current_tab'] == "Tab 2":
         st.header("Phân Tích Khách Hàng")
         @st.cache_data
         def process_segments(data):
@@ -135,8 +135,7 @@ def main():
         unique_segments, segment_percentage = process_segments(data)
         
         # Layout for DataFrame and Pie Chart, adjust 'gap' for better spacing
-        col1, col2 = st.columns([1, 1], gap="medium")
-        
+        col1, col2 = st.columns([1, 1], gap="medium")        
         with col1:
             st.markdown("### Bảng phân khúc khách hàng duy nhất:")
             # Improved display using st.table for a cleaner look
@@ -146,39 +145,43 @@ def main():
             fig = plot_customer_distribution(segment_percentage)
             st.plotly_chart(fig, use_container_width=True) 
         def plot_total_orders_by_segment(data):
-            # Tổng số đơn hàng theo PKKH
             total_orders_by_segment = data.groupby('Mã PKKH')['Mã đơn hàng'].nunique()
-            df_total = total_orders_by_segment.reset_index(name='Tổng số đơn hàng').sort_values(by='Tổng số đơn hàng', ascending=True)
-            
+            df_total = total_orders_by_segment.reset_index(name='Tổng số đơn hàng').sort_values(by='Tổng số đơn hàng', ascending=False)
+
             fig_total = px.bar(df_total, x='Mã PKKH', y='Tổng số đơn hàng',
                             title='Tổng số đơn hàng theo Mã PKKH',
                             color='Tổng số đơn hàng',
                             color_continuous_scale=px.colors.sequential.Rainbow)
+            fig_total.update_layout(margin={"r":10, "t":30, "l":10, "b":10}, 
+                                    width=450, height=400)  # Cập nhật kích thước và margin
             return fig_total
 
         def plot_quarterly_orders_by_segment(data):
-            # Tổng số đơn hàng theo PKKH từng quý
             quarterly_orders = data.groupby(['Mã PKKH', 'Quý'])['Mã đơn hàng'].nunique()
             df_quarterly = quarterly_orders.reset_index(name='Tổng số đơn hàng')
-            
+
             fig_quarterly = px.line(df_quarterly, x='Quý', y='Tổng số đơn hàng',
                                     title='Đơn hàng theo từng Quý',
                                     color='Mã PKKH',
                                     markers=True,
                                     color_discrete_sequence=px.colors.diverging.Geyser)
+            fig_quarterly.update_layout(margin={"r":10, "t":30, "l":10, "b":10}, 
+                                        width=450, height=400)
             return fig_quarterly
 
         def plot_monthly_orders_by_segment(data):
-            # Tổng số đơn hàng theo PKKH từng tháng
             monthly_orders = data.groupby(['Mã PKKH', 'Tháng'])['Mã đơn hàng'].nunique()
             df_monthly = monthly_orders.reset_index(name='Tổng số đơn hàng')
-            
+
             fig_monthly = px.line(df_monthly, x='Tháng', y='Tổng số đơn hàng',
                                 title='Đơn hàng theo từng Tháng',
                                 color='Mã PKKH',
                                 markers=True,
                                 color_discrete_sequence=px.colors.diverging.Geyser)
+            fig_monthly.update_layout(margin={"r":10, "t":30, "l":10, "b":10}, 
+                                    width=450, height=400)
             return fig_monthly
+        st.title("Phân tích đơn hàng")
         col1, col2, col3 = st.columns(3)
         with col1:
             st.plotly_chart(plot_total_orders_by_segment(data))
@@ -186,23 +189,38 @@ def main():
             st.plotly_chart(plot_quarterly_orders_by_segment(data))
         with col3:
             st.plotly_chart(plot_monthly_orders_by_segment(data))
+
         def plot_bar_chart(data, group_col, agg_col, title, color_scale):
             grouped_data = data.groupby(group_col)[agg_col].sum()
             df = grouped_data.reset_index(name=f'Tổng {agg_col}').sort_values(by=f'Tổng {agg_col}', ascending=True)
+
             fig = px.bar(df, x=group_col, y=f'Tổng {agg_col}',
                         title=title,
                         color=f'Tổng {agg_col}',
                         color_continuous_scale=color_scale)
+            fig.update_layout(
+                margin={"r":30, "t":60, "l":30, "b":30},  # Chỉnh sửa margin
+                width=450,  # Chiều rộng của biểu đồ
+                height=400,  # Chiều cao của biểu đồ
+                title_font_size=16  # Cỡ chữ của tiêu đề
+            )
             return fig
 
         def plot_line_chart(data, group_cols, agg_col, title, color_sequence):
             grouped_data = data.groupby(group_cols)[agg_col].sum()
             df = grouped_data.reset_index(name=f'Tổng {agg_col}')
+
             fig = px.line(df, x=group_cols[1], y=f'Tổng {agg_col}',
                         title=title,
                         color=group_cols[0],
                         markers=True,
                         color_discrete_sequence=color_sequence)
+            fig.update_layout(
+                margin={"r":30, "t":60, "l":30, "b":30},  # Chỉnh sửa margin
+                width=450,  # Chiều rộng của biểu đồ
+                height=400,  # Chiều cao của biểu đồ
+                title_font_size=16  # Cỡ chữ của tiêu đề
+            )
             return fig
         def display_charts(data):
             st.title("Phân tích Doanh thu và Lợi nhuận")
@@ -226,11 +244,11 @@ def main():
 
 
         
-    elif current_tab == "Tab 3":
+    elif st.session_state['current_tab'] == "Tab 3":
         st.header("Phân Tích Doanh Thu")
-    elif current_tab == "Tab 4":
+    elif st.session_state['current_tab'] == "Tab 4":
         st.header("Phân Tích Hành Vi Mua")
-    elif current_tab == "Tab 5":
+    elif st.session_state['current_tab'] == "Tab 5":
         st.header("Phân Tích RFM")    
         # This decorator ensures that the data processing is cached correctly.
         def calculate_purchase_frequency(data):
