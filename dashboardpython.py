@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
+
 st.set_page_config(page_title="Dashboard Python nhóm 117", layout="wide")
 
 # Function to load data with caching to improve performance
@@ -18,8 +19,8 @@ def main():
         st.markdown("<h1 style='text-align: center; font-size: 60px;'>Dashboard Nhóm 117</h1>", unsafe_allow_html=True)
 
     # Create button-based tabs
-    if 'current_tab' not in st.session_state:
-        st.session_state['current_tab'] = 'Tab 1'
+        if 'current_tab' not in st.session_state:
+            st.session_state['current_tab'] = 'Tab 1'
 
     # Create button-based tabs
     tabs = ["Tab 1", "Tab 2", "Tab 3", "Tab 4", "Tab 5"]
@@ -246,6 +247,7 @@ def main():
         
     elif st.session_state['current_tab'] == "Tab 3":
         st.header("Phân Tích Doanh Thu")
+        st.markdown("chưa xong")
     elif st.session_state['current_tab'] == "Tab 4":
         st.header("Phân Tích Hành Vi Mua")
     elif st.session_state['current_tab'] == "Tab 5":
@@ -300,7 +302,6 @@ def main():
         else:
             st.write("Không có dữ liệu cho loại phân tích được chọn.")
 
-        
-
 if __name__ == '__main__':
     main()
+
